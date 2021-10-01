@@ -1,5 +1,7 @@
 import json
+import foodcartapp
 
+import phonenumbers
 from django.http import JsonResponse
 from django.templatetags.static import static
 from rest_framework import status
@@ -64,18 +66,32 @@ def product_list_api(request):
 @api_view(['POST'])
 def register_order(request):
     order = request.data
+    print(order)
 
-    try: 
-        order['products']
-    except KeyError:
-        content = {'products': 'Обязательное поле'}
-        return Response(content, status=status.HTTP_406_NOT_ACCEPTABLE)
+    fields = ['products', 'firstname', 'lastname', 'phonenumber', 'address']
+    for field in fields:
+        try:
+            order[field]
+        except KeyError:
+            content = {'products, firstname, lastname, phonenumber, address': 'Обязательное поле'}
+            return Response(content, status=status.HTTP_406_NOT_ACCEPTABLE)
 
     if isinstance(order['products'], str):
-        content = {'products': 'Ожидался list со значениями, но был получен "str"'}
+        content = {'products': 'Ожидался list со значениями, но был получен str'}
         return Response(content, status=status.HTTP_406_NOT_ACCEPTABLE)
-    elif order['products'] is None:
-        content = {'products': 'Это поле не может быть пустым'}
+
+    if isinstance(order['firstname'], list):
+        content = {'firstname': 'Not a valid string'}
+        return Response(content, status=status.HTTP_406_NOT_ACCEPTABLE)
+
+    for field in fields:
+        if order[field] is None or not order[field]:
+            content = {field: 'Это поле не может быть пустым'}
+            return Response(content, status=status.HTTP_406_NOT_ACCEPTABLE)
+
+    phonenumber = phonenumbers.parse(order['phonenumber'])
+    if not phonenumbers.is_valid_number(phonenumber):
+        content = {'phonenumber': 'Введен некорректный номер телефона'}
         return Response(content, status=status.HTTP_406_NOT_ACCEPTABLE)
     
     customer = Order.objects.create(
@@ -85,9 +101,14 @@ def register_order(request):
         address = order['address']
     )
     for product in order['products']:
-        OrderItem.objects.create(
-            customer = customer,
-            product = Product.objects.get(id=product['product']),
-            quantity = product['quantity']
-        )
+        try:
+            OrderItem.objects.create(
+                customer = customer,
+                product = Product.objects.get(id=product['product']),
+                quantity = product['quantity']
+            )
+        except foodcartapp.models.Product.DoesNotExist:
+            customer.delete()
+            content = {'products': 'Недопустимый первичный ключ {}'.format(product['product'])}
+            return Response(content, status=status.HTTP_406_NOT_ACCEPTABLE)
     return Response(order)
