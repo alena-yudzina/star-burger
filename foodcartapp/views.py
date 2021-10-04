@@ -1,14 +1,25 @@
-import json
-import foodcartapp
-
-import phonenumbers
 from django.http import JsonResponse
 from django.templatetags.static import static
-from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
+from rest_framework.serializers import ModelSerializer
 
 from .models import Order, OrderItem, Product
+
+
+class OrderItemSerializer(ModelSerializer):
+
+    class Meta:
+        model = OrderItem
+        fields = ['product', 'quantity']
+    
+
+class OrderSerializer(ModelSerializer):
+    products = OrderItemSerializer(many=True, allow_empty=False)
+
+    class Meta:
+        model = Order
+        fields = ['firstname', 'lastname', 'phonenumber' , 'address', 'products']
 
 
 def banners_list_api(request):
@@ -66,49 +77,21 @@ def product_list_api(request):
 @api_view(['POST'])
 def register_order(request):
     order = request.data
-    print(order)
-
-    fields = ['products', 'firstname', 'lastname', 'phonenumber', 'address']
-    for field in fields:
-        try:
-            order[field]
-        except KeyError:
-            content = {'products, firstname, lastname, phonenumber, address': 'Обязательное поле'}
-            return Response(content, status=status.HTTP_406_NOT_ACCEPTABLE)
-
-    if isinstance(order['products'], str):
-        content = {'products': 'Ожидался list со значениями, но был получен str'}
-        return Response(content, status=status.HTTP_406_NOT_ACCEPTABLE)
-
-    if isinstance(order['firstname'], list):
-        content = {'firstname': 'Not a valid string'}
-        return Response(content, status=status.HTTP_406_NOT_ACCEPTABLE)
-
-    for field in fields:
-        if order[field] is None or not order[field]:
-            content = {field: 'Это поле не может быть пустым'}
-            return Response(content, status=status.HTTP_406_NOT_ACCEPTABLE)
-
-    phonenumber = phonenumbers.parse(order['phonenumber'])
-    if not phonenumbers.is_valid_number(phonenumber):
-        content = {'phonenumber': 'Введен некорректный номер телефона'}
-        return Response(content, status=status.HTTP_406_NOT_ACCEPTABLE)
+    serializer = OrderSerializer(data=order)
+    serializer.is_valid(raise_exception=True)
     
     customer = Order.objects.create(
-        name = order['firstname'],
-        surname = order['lastname'],
-        phone = order['phonenumber'],
-        address = order['address']
+        firstname = serializer.validated_data['firstname'],
+        lastname = serializer.validated_data['lastname'],
+        phonenumber = serializer.validated_data['phonenumber'],
+        address = serializer.validated_data['address']
     )
-    for product in order['products']:
-        try:
-            OrderItem.objects.create(
-                customer = customer,
-                product = Product.objects.get(id=product['product']),
-                quantity = product['quantity']
-            )
-        except foodcartapp.models.Product.DoesNotExist:
-            customer.delete()
-            content = {'products': 'Недопустимый первичный ключ {}'.format(product['product'])}
-            return Response(content, status=status.HTTP_406_NOT_ACCEPTABLE)
+    
+    for product in serializer.validated_data['products']:
+        OrderItem.objects.create(
+            customer = customer,
+            product = product['product'],
+            quantity = product['quantity']
+        )
+
     return Response(order)
