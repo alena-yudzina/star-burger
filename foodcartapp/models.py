@@ -126,6 +126,7 @@ class RestaurantMenuItem(models.Model):
 
 
 class Order(models.Model):
+    id = models.BigAutoField(primary_key=True)
     firstname = models.CharField(
         verbose_name='Имя',
         max_length=50
@@ -148,7 +149,7 @@ class Order(models.Model):
         verbose_name_plural = 'Заказы'
 
     def __str__(self):
-        return f"{self.name} {self.surname}"
+        return f"{self.firstname} {self.lastname}"
 
 
 class OrderItem(models.Model):
@@ -174,4 +175,4 @@ class OrderItem(models.Model):
         verbose_name_plural = 'Элементы заказа'
 
     def __str__(self):
-        return f"{self.product.name} {self.customer.surname}"
+        return self.product.name
