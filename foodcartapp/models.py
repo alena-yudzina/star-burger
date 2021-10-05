@@ -1,5 +1,6 @@
-from django.core.validators import MinValueValidator, MaxValueValidator
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
+from django.db.models import DecimalField, F, Sum
 from django.db.models.deletion import SET_NULL
 from phonenumber_field.modelfields import PhoneNumberField
 
@@ -125,6 +126,16 @@ class RestaurantMenuItem(models.Model):
         return f"{self.restaurant.name} - {self.product.name}"
 
 
+class OrderQuerySet(models.QuerySet):
+    def get_total_price(self):
+            return self.annotate(
+                total_price=Sum(
+                    F('products__price') * F('products__quantity'),
+                    output_field=DecimalField(max_digits=8, decimal_places=2)
+                )
+            )
+
+
 class Order(models.Model):
     id = models.BigAutoField(primary_key=True)
     firstname = models.CharField(
@@ -148,6 +159,8 @@ class Order(models.Model):
         default=False,
         db_index=True
     )
+    objects = OrderQuerySet.as_manager()
+
     class Meta:
         verbose_name = 'Заказ'
         verbose_name_plural = 'Заказы'
@@ -172,6 +185,11 @@ class OrderItem(models.Model):
     quantity = models.IntegerField(
         validators=[MinValueValidator(1), MaxValueValidator(10)],
         verbose_name='Количество',
+    )
+    price = models.DecimalField(
+        verbose_name='Цена',
+        max_digits=8, decimal_places=2, default=0,
+        validators=[MinValueValidator(0)]
     )
 
     class Meta:
