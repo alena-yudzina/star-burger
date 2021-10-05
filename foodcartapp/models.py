@@ -143,7 +143,11 @@ class Order(models.Model):
         'Адрес',
         max_length=100,
     ) 
-
+    processed = models.BooleanField(
+        'обработан',
+        default=False,
+        db_index=True
+    )
     class Meta:
         verbose_name = 'Заказ'
         verbose_name_plural = 'Заказы'
