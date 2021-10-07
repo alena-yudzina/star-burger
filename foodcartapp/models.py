@@ -137,6 +137,15 @@ class OrderQuerySet(models.QuerySet):
 
 
 class Order(models.Model):
+
+    PROCESSED = 'processed'
+    NOT_PROCESSED = 'not_processed'
+
+    order_statuses = [
+        (PROCESSED, 'Обработаный'),
+        (NOT_PROCESSED, 'Необработанный')
+    ]
+
     id = models.BigAutoField(primary_key=True)
     firstname = models.CharField(
         verbose_name='Имя',
@@ -154,11 +163,14 @@ class Order(models.Model):
         'Адрес',
         max_length=100,
     ) 
-    processed = models.BooleanField(
-        'обработан',
-        default=False,
+    status = models.CharField(
+        verbose_name='Статус',
+        max_length=13,
+        choices=order_statuses,
+        default=NOT_PROCESSED,
         db_index=True
     )
+    
     objects = OrderQuerySet.as_manager()
 
     class Meta:
