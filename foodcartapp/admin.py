@@ -1,10 +1,26 @@
+from django.conf import settings
 from django.contrib import admin
+from django.forms import ModelForm
+from django.http import HttpResponseRedirect
 from django.shortcuts import reverse
 from django.templatetags.static import static
 from django.utils.html import format_html
+from django.utils.http import url_has_allowed_host_and_scheme
 
 from .models import (Order, OrderItem, Product, ProductCategory, Restaurant,
                      RestaurantMenuItem)
+
+
+class OrderModelAdmin(admin.ModelAdmin):
+    form = ModelForm
+
+    def response_change(self, request, obj):
+        if 'next' in request.GET:
+            next_url = request.GET['next']
+            if url_has_allowed_host_and_scheme(next_url, settings.ALLOWED_HOSTS):
+                return HttpResponseRedirect(next_url)
+
+        return super(OrderModelAdmin, self).response_change(request, obj)
 
 
 class RestaurantMenuItemInline(admin.TabularInline):
@@ -110,7 +126,7 @@ class OrderItemInline(admin.TabularInline):
 
 
 @admin.register(Order)
-class OrderAdmin(admin.ModelAdmin):
+class OrderAdmin(OrderModelAdmin):
     search_fields = [
         'suname',
         'address',
