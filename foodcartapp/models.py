@@ -206,6 +206,11 @@ class Order(models.Model):
         null=True,
         blank=True
     )
+    restaurant = models.ManyToManyField(
+        'Restaurant',
+        related_name='orders',
+        null=True
+    )
     
     objects = OrderQuerySet.as_manager()
 

@@ -5,7 +5,7 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework.serializers import ModelSerializer
 
-from .models import Order, OrderItem, Product
+from .models import Order, OrderItem, Product, RestaurantMenuItem
 
 
 class OrderItemSerializer(ModelSerializer):
@@ -88,7 +88,7 @@ def register_order(request):
         phonenumber = serializer.validated_data['phonenumber'],
         address = serializer.validated_data['address']
     )
-    
+    restaurants = RestaurantMenuItem.objects.all()
     for product in serializer.validated_data['products']:
         OrderItem.objects.create(
             customer = customer,
@@ -96,5 +96,6 @@ def register_order(request):
             quantity = product['quantity'],
             price = product['product'].price
         )
+
     serializer = OrderSerializer(customer)
     return Response(serializer.data)
