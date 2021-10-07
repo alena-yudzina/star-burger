@@ -107,7 +107,8 @@ def view_orders(request):
             'lastname': order.lastname,
             'address': order.address,
             'phonenumber': order.phonenumber,
-            'comment': order.comment
+            'comment': order.comment,
+            'payment': order.get_payment_display()
         }
         orders.append(desc)
     return render(request, template_name='order_items.html', context={

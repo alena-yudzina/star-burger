@@ -147,6 +147,16 @@ class Order(models.Model):
         (NOT_PROCESSED, 'Необработанный')
     ]
 
+    CASH = 'cash'
+    CARD = 'card'
+    NOT_SELECTED = 'not_selected'
+
+    payment_methods = [
+        (CASH, 'Наличными'),
+        (CARD, 'Картой'),
+        (NOT_SELECTED, 'Не выбран')
+    ]
+
     id = models.BigAutoField(primary_key=True)
     firstname = models.CharField(
         verbose_name='Имя',
@@ -170,6 +180,12 @@ class Order(models.Model):
         choices=order_statuses,
         default=NOT_PROCESSED,
         db_index=True
+    )
+    payment = models.CharField(
+        verbose_name='Оплата',
+        max_length=13,
+        choices=payment_methods,
+        default=NOT_SELECTED,
     )
     comment = models.TextField(
         verbose_name='Комментарий',
