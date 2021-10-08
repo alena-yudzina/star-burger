@@ -1,9 +1,15 @@
+import os
+
+import requests
 from django.db import transaction
 from django.http import JsonResponse
 from django.templatetags.static import static
+from dotenv import load_dotenv
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework.serializers import ModelSerializer
+
+from places.models import Place
 
 from .models import (Order, OrderItem, OrderRestaurant, Product,
                      RestaurantMenuItem)
@@ -90,9 +96,30 @@ def find_restaurants(order):
     return list(rests_for_products[0])
 
 
+def fetch_coordinates(apikey, address):
+    base_url = "https://geocode-maps.yandex.ru/1.x"
+    response = requests.get(base_url, params={
+        "geocode": address,
+        "apikey": apikey,
+        "format": "json",
+    })
+    response.raise_for_status()
+    found_places = response.json()['response']['GeoObjectCollection']['featureMember']
+
+    if not found_places:
+        return None
+
+    most_relevant = found_places[0]
+    lon, lat = most_relevant['GeoObject']['Point']['pos'].split(" ")
+    return lon, lat
+
+
 @transaction.atomic
 @api_view(['POST'])
 def register_order(request):
+    load_dotenv()
+    apikey = os.environ['YANDEX_GEO_API']
+
     order = request.data
     serializer = OrderSerializer(data=order)
     serializer.is_valid(raise_exception=True)
@@ -104,6 +131,17 @@ def register_order(request):
         address = serializer.validated_data['address']
     )
 
+    order_lon, order_lat = fetch_coordinates(
+        apikey, serializer.validated_data['address']
+    )
+    obj, created = Place.objects.update_or_create(
+        address = serializer.validated_data['address'],
+        defaults={
+            'lng': order_lon,
+            'lat': order_lat
+        }
+    )
+
     for product in serializer.validated_data['products']:
         OrderItem.objects.create(
             customer = customer,
@@ -113,9 +151,19 @@ def register_order(request):
         )
 
     for restaurant in find_restaurants(customer):
-        OrderRestaurant.objects.create(
+        rest = OrderRestaurant.objects.create(
             order = customer,
             restaurant = restaurant
+        )
+        rest_lon, rest_lat = fetch_coordinates(
+            apikey, rest.restaurant.address
+        )
+        obj, created = Place.objects.update_or_create(
+            address = rest.restaurant.address,
+            defaults={
+                'lng': rest_lon,
+                'lat': rest_lat
+            }
         )
 
     serializer = OrderSerializer(customer)

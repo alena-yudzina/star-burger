@@ -13,6 +13,7 @@ from geopy import distance
 
 from foodcartapp.models import (Order, OrderItem, OrderRestaurant, Product,
                                 Restaurant, RestaurantMenuItem)
+from places.models import Place
 
 
 class Login(forms.Form):
@@ -119,20 +120,21 @@ def fetch_coordinates(apikey, address):
 
 def get_order_details(order, restaurants):
 
-    load_dotenv()
-    apikey = os.environ['YANDEX_GEO_API']
-
-    order_lon, order_lat = fetch_coordinates(apikey, order.address)
-    rest_coords = []
+    order_coords = Place.objects.get(address=order.address)
+    order_lng = order_coords.lng
+    order_lat = order_coords.lat
+    rest_distance = []
     for rest in restaurants:
-        rest_lon, rest_lat = fetch_coordinates(apikey, rest.restaurant.address)
-        rest_coords.append({
+        rest_coords = Place.objects.get(address=rest.restaurant.address)
+        rest_lng = rest_coords.lng
+        rest_lat = rest_coords.lat
+        rest_distance.append({
             'name': rest.restaurant.name,
             'distance': round(distance.distance(
-                (order_lon, order_lat), (rest_lon, rest_lat)
+                (order_lng, order_lat), (rest_lng, rest_lat)
             ).km, 2),
         })
-    rest_coords = sorted(rest_coords, key=lambda k: k['distance'])
+    rest_distance = sorted(rest_distance, key=lambda k: k['distance'])
     
     return {
         'id': order.id,
@@ -144,7 +146,7 @@ def get_order_details(order, restaurants):
         'phonenumber': order.phonenumber,
         'comment': order.comment,
         'payment': order.get_payment_display(),
-        'restaurant': rest_coords
+        'restaurant': rest_distance
     }
 
 
