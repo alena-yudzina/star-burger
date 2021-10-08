@@ -1,14 +1,18 @@
-from django import forms
-from django.shortcuts import redirect, render
-from django.views import View
-from django.urls import reverse_lazy
-from django.contrib.auth.decorators import user_passes_test
+import os
 
+import requests
+from django import forms
 from django.contrib.auth import authenticate, login
 from django.contrib.auth import views as auth_views
+from django.contrib.auth.decorators import user_passes_test
+from django.shortcuts import redirect, render
+from django.urls import reverse_lazy
+from django.views import View
+from dotenv import load_dotenv
+from geopy import distance
 
-
-from foodcartapp.models import Product, Restaurant, Order, RestaurantMenuItem
+from foodcartapp.models import (Order, OrderItem, OrderRestaurant, Product,
+                                Restaurant, RestaurantMenuItem)
 
 
 class Login(forms.Form):
@@ -95,23 +99,41 @@ def view_restaurants(request):
     })
 
 
-def get_order_details(order):
-    restaurants = RestaurantMenuItem.objects.select_related('restaurant')
-    order_items = order.products.all()
-    restaurant_with_item = set()
-    restaurants_for_order = []
-    for item in order_items:
-        for place in restaurants.filter(product=item.product.id):
-            if place.availability:
-                restaurant_with_item.add(place.restaurant.name)
-        restaurants_for_order.append(restaurant_with_item.copy())
-        restaurant_with_item.clear()
-    while len(restaurants_for_order) != 1:
-        intersection = restaurants_for_order[-1] & restaurants_for_order[-2]
-        restaurants_for_order.pop(-1)
-        restaurants_for_order.pop(-1)
-        restaurants_for_order.append(intersection)
+def fetch_coordinates(apikey, address):
+    base_url = "https://geocode-maps.yandex.ru/1.x"
+    response = requests.get(base_url, params={
+        "geocode": address,
+        "apikey": apikey,
+        "format": "json",
+    })
+    response.raise_for_status()
+    found_places = response.json()['response']['GeoObjectCollection']['featureMember']
 
+    if not found_places:
+        return None
+
+    most_relevant = found_places[0]
+    lon, lat = most_relevant['GeoObject']['Point']['pos'].split(" ")
+    return lon, lat
+
+
+def get_order_details(order, restaurants):
+
+    load_dotenv()
+    apikey = os.environ['YANDEX_GEO_API']
+
+    order_lon, order_lat = fetch_coordinates(apikey, order.address)
+    rest_coords = []
+    for rest in restaurants:
+        rest_lon, rest_lat = fetch_coordinates(apikey, rest.restaurant.address)
+        rest_coords.append({
+            'name': rest.restaurant.name,
+            'distance': round(distance.distance(
+                (order_lon, order_lat), (rest_lon, rest_lat)
+            ).km, 2),
+        })
+    rest_coords = sorted(rest_coords, key=lambda k: k['distance'])
+    
     return {
         'id': order.id,
         'status': order.get_status_display(),
@@ -122,14 +144,19 @@ def get_order_details(order):
         'phonenumber': order.phonenumber,
         'comment': order.comment,
         'payment': order.get_payment_display(),
-        'restaurant': restaurants_for_order[0]
+        'restaurant': rest_coords
     }
 
 
 @user_passes_test(is_manager, login_url='restaurateur:login')
 def view_orders(request):
-    orders = Order.objects.get_total_price()
-    
+    orders = Order.objects.all().get_total_price()
+    restaurants = OrderRestaurant.objects.all().prefetch_related('restaurant')
+
     return render(request, template_name='order_items.html', context={
-        'order_items': [get_order_details(order) for order in orders]
+        'order_items': [
+            get_order_details(
+                order, restaurants.filter(order=order)
+            ) for order in orders
+        ]
     })

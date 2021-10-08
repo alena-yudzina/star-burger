@@ -5,7 +5,8 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework.serializers import ModelSerializer
 
-from .models import Order, OrderItem, Product, RestaurantMenuItem
+from .models import (Order, OrderItem, OrderRestaurant, Product,
+                     RestaurantMenuItem)
 
 
 class OrderItemSerializer(ModelSerializer):
@@ -75,6 +76,20 @@ def product_list_api(request):
     })
 
 
+def find_restaurants(order):
+    rests_for_products = []
+    for order_item in OrderItem.objects.filter(customer=order):
+        rests_for_product = [item.restaurant for item in 
+            RestaurantMenuItem.objects.filter(product=order_item.product) if item.availability]
+        rests_for_products.append(rests_for_product)
+    while len(rests_for_products) != 1:
+        intersection = set(rests_for_products[-1]) & set(rests_for_products[-2])
+        rests_for_products.pop(-1)
+        rests_for_products.pop(-1)
+        rests_for_products.append(intersection)
+    return list(rests_for_products[0])
+
+
 @transaction.atomic
 @api_view(['POST'])
 def register_order(request):
@@ -88,13 +103,19 @@ def register_order(request):
         phonenumber = serializer.validated_data['phonenumber'],
         address = serializer.validated_data['address']
     )
-    restaurants = RestaurantMenuItem.objects.all()
+
     for product in serializer.validated_data['products']:
         OrderItem.objects.create(
             customer = customer,
             product = product['product'],
             quantity = product['quantity'],
             price = product['product'].price
+        )
+
+    for restaurant in find_restaurants(customer):
+        OrderRestaurant.objects.create(
+            order = customer,
+            restaurant = restaurant
         )
 
     serializer = OrderSerializer(customer)
