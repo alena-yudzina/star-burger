@@ -1,12 +1,13 @@
 import os
 
 import dj_database_url
-
 from environs import Env
 
 
 env = Env()
 env.read_env()
+
+YANDEX_GEO_API = env('YANDEX_GEO_API')
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')

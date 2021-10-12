@@ -1,6 +1,7 @@
 import os
 
 import requests
+from django.conf import settings
 from django.db import transaction
 from django.http import JsonResponse
 from django.templatetags.static import static
@@ -118,7 +119,7 @@ def fetch_coordinates(apikey, address):
 @api_view(['POST'])
 def register_order(request):
     load_dotenv()
-    apikey = os.environ['YANDEX_GEO_API']
+    apikey = settings.YANDEX_GEO_API
 
     order = request.data
     serializer = OrderSerializer(data=order)
