@@ -85,7 +85,7 @@ def product_list_api(request):
 
 def find_restaurants(order):
     rests_for_products = []
-    for order_item in OrderItem.objects.filter(customer=order):
+    for order_item in order.products.all():
         rests_for_product = [item.restaurant for item in 
             RestaurantMenuItem.objects.filter(product=order_item.product) if item.availability]
         rests_for_products.append(rests_for_product)
@@ -112,7 +112,7 @@ def fetch_coordinates(apikey, address):
 
     most_relevant = found_places[0]
     lon, lat = most_relevant['GeoObject']['Point']['pos'].split(" ")
-    return lon, lat
+    return  lon, lat
 
 
 @transaction.atomic
@@ -135,6 +135,7 @@ def register_order(request):
     order_lon, order_lat = fetch_coordinates(
         apikey, serializer.validated_data['address']
     )
+
     obj, created = Place.objects.update_or_create(
         address = serializer.validated_data['address'],
         defaults={
