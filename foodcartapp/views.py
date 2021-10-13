@@ -1,17 +1,13 @@
-import os
-
 import requests
 from django.conf import settings
 from django.db import transaction
 from django.http import JsonResponse
 from django.templatetags.static import static
-from dotenv import load_dotenv
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework.serializers import ModelSerializer
 
 from places.models import Place
-
 from .models import (Order, OrderItem, OrderRestaurant, Product,
                      RestaurantMenuItem)
 
@@ -117,7 +113,6 @@ def fetch_coordinates(apikey, address):
 @transaction.atomic
 @api_view(['POST'])
 def register_order(request):
-    load_dotenv()
     apikey = settings.YANDEX_GEO_API
 
     order = request.data
@@ -145,7 +140,7 @@ def register_order(request):
 
     for product in serializer.validated_data['products']:
         OrderItem.objects.create(
-            customer = customer,
+            order = customer,
             product = product['product'],
             quantity = product['quantity'],
             price = product['product'].price

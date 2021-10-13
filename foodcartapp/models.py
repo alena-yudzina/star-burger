@@ -230,7 +230,7 @@ class Order(models.Model):
 
 
 class OrderItem(models.Model):
-    customer = models.ForeignKey(
+    order = models.ForeignKey(
         Order,
         related_name='products',
         verbose_name="Покупатель",
