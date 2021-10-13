@@ -157,7 +157,7 @@ class Order(models.Model):
         (NOT_SELECTED, 'Не выбран')
     ]
 
-    id = models.BigAutoField(primary_key=True)
+    id = models.BigAutoField()
     firstname = models.CharField(
         verbose_name='Имя',
         max_length=50
@@ -169,6 +169,7 @@ class Order(models.Model):
     )
     phonenumber = PhoneNumberField(
         verbose_name='Телефон',
+        db_index=True
     )
     address = models.CharField(
         'Адрес',
@@ -186,6 +187,7 @@ class Order(models.Model):
         max_length=13,
         choices=payment_methods,
         default=NOT_SELECTED,
+        db_index=True
     )
     comment = models.TextField(
         verbose_name='Комментарий',
@@ -194,17 +196,20 @@ class Order(models.Model):
     )
     created_at = models.DateTimeField(
         verbose_name='Время создания заказа',
-        default=timezone.now
+        default=timezone.now,
+        db_index=True
     )
     called_at = models.DateTimeField(
         verbose_name='Время подтверждения заказа',
         null=True,
-        blank=True
+        blank=True,
+        db_index=True
     )
     delivered_at = models.DateTimeField(
         verbose_name='Время доставки заказа',
         null=True,
-        blank=True
+        blank=True,
+        db_index=True
     )
     
     objects = OrderQuerySet.as_manager()
