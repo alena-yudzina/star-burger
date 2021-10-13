@@ -79,19 +79,6 @@ def product_list_api(request):
     })
 
 
-def find_restaurants(order):
-    rests_for_products = []
-    for order_item in order.products.all():
-        rests_for_product = [item.restaurant for item in
-            RestaurantMenuItem.objects.filter(product=order_item.product) if item.availability]
-        rests_for_products.append(rests_for_product)
-    appropriate_rests = set(rests_for_products[0])
-    for rests in rests_for_products:
-        appropriate_rests = appropriate_rests & set(rests)
-    return appropriate_rests
-
-
-
 def fetch_coordinates(apikey, address):
     base_url = "https://geocode-maps.yandex.ru/1.x"
     response = requests.get(base_url, params={
@@ -119,7 +106,7 @@ def register_order(request):
     serializer = OrderSerializer(data=order)
     serializer.is_valid(raise_exception=True)
     
-    customer = Order.objects.create(
+    order = Order.objects.create(
         firstname = serializer.validated_data['firstname'],
         lastname = serializer.validated_data['lastname'],
         phonenumber = serializer.validated_data['phonenumber'],
@@ -140,27 +127,11 @@ def register_order(request):
 
     for product in serializer.validated_data['products']:
         OrderItem.objects.create(
-            order = customer,
+            order = order,
             product = product['product'],
             quantity = product['quantity'],
             price = product['product'].price
         )
 
-    for restaurant in find_restaurants(customer):
-        rest = OrderRestaurant.objects.create(
-            order = customer,
-            restaurant = restaurant
-        )
-        rest_lon, rest_lat = fetch_coordinates(
-            apikey, rest.restaurant.address
-        )
-        obj, created = Place.objects.update_or_create(
-            address = rest.restaurant.address,
-            defaults={
-                'lng': rest_lon,
-                'lat': rest_lat
-            }
-        )
-
-    serializer = OrderSerializer(customer)
+    serializer = OrderSerializer(order)
     return Response(serializer.data)

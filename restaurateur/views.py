@@ -1,7 +1,6 @@
-import os
-
 import requests
 from django import forms
+from django.conf import settings
 from django.contrib.auth import authenticate, login
 from django.contrib.auth import views as auth_views
 from django.contrib.auth.decorators import user_passes_test
@@ -150,9 +149,40 @@ def get_order_details(order, restaurants):
     }
 
 
+def find_restaurants(order):
+    rests_for_products = []
+    for order_item in order.products.all():
+        rests_for_product = [item.restaurant for item in
+            RestaurantMenuItem.objects.filter(product=order_item.product) if item.availability]
+        rests_for_products.append(rests_for_product)
+    appropriate_rests = set(rests_for_products[0])
+    for rests in rests_for_products:
+        appropriate_rests = appropriate_rests & set(rests)
+    return appropriate_rests
+
+
 @user_passes_test(is_manager, login_url='restaurateur:login')
 def view_orders(request):
     orders = Order.objects.all().get_total_price()
+
+    apikey = settings.YANDEX_GEO_API
+    for order in orders:
+        for restaurant in find_restaurants(order):
+            rest, created = OrderRestaurant.objects.get_or_create(
+                order = order,
+                restaurant = restaurant
+            )
+            rest_lon, rest_lat = fetch_coordinates(
+                apikey, rest.restaurant.address
+            )
+            obj, created = Place.objects.update_or_create(
+                address = rest.restaurant.address,
+                defaults={
+                    'lng': rest_lon,
+                    'lat': rest_lat
+                }
+            )
+
     restaurants = OrderRestaurant.objects.all().prefetch_related('restaurant')
 
     return render(request, template_name='order_items.html', context={
