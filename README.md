@@ -53,6 +53,11 @@ python -m venv venv
 pip install -r requirements.txt
 ```
 
+Создайте файл `.env` в каталоге `star_burger/` со следующими настройками:
+
+- `YANDEX_GEO_API` — ключ доступа к яндекс JavaScript API и HTTP Геокодер. [https://developer.tech.yandex.ru/](https://developer.tech.yandex.ru/)
+
+
 Создайте файл базы данных SQLite и отмигрируйте её следующей командой:
 
 ```sh
