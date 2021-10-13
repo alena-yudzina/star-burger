@@ -157,7 +157,7 @@ class Order(models.Model):
         (NOT_SELECTED, 'Не выбран')
     ]
 
-    id = models.BigAutoField()
+    id = models.BigAutoField(primary_key=True)
     firstname = models.CharField(
         verbose_name='Имя',
         max_length=50
@@ -212,6 +212,15 @@ class Order(models.Model):
         db_index=True
     )
     
+    restaurant = models.ForeignKey(
+        Restaurant,
+        on_delete=models.CASCADE,
+        related_name='orders',
+        verbose_name='Ресторан',
+        blank=True,
+        null=True
+    )
+
     objects = OrderQuerySet.as_manager()
 
     class Meta:
