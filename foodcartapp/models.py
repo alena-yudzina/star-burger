@@ -83,7 +83,6 @@ class Product(models.Model):
     )
     description = models.TextField(
         'описание',
-        max_length=200,
         blank=True,
     )
 
@@ -191,7 +190,6 @@ class Order(models.Model):
     )
     comment = models.TextField(
         verbose_name='Комментарий',
-        max_length=300,
         blank=True
     )
     created_at = models.DateTimeField(
