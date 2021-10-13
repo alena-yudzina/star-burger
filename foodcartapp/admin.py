@@ -20,7 +20,7 @@ class OrderModelAdmin(admin.ModelAdmin):
             if url_has_allowed_host_and_scheme(next_url, settings.ALLOWED_HOSTS):
                 return HttpResponseRedirect(next_url)
 
-        return super(OrderModelAdmin, self).response_change(request, obj)
+        return super().response_change(request, obj)
 
 
 class RestaurantMenuItemInline(admin.TabularInline):

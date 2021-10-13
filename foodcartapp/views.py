@@ -133,5 +133,4 @@ def register_order(request):
             price = product['product'].price
         )
 
-    serializer = OrderSerializer(order)
     return Response(serializer.data)
