@@ -211,7 +211,7 @@ class Order(models.Model):
     
     restaurant = models.ForeignKey(
         Restaurant,
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,
         related_name='orders',
         verbose_name='Ресторан',
         blank=True,
@@ -232,7 +232,7 @@ class OrderItem(models.Model):
     order = models.ForeignKey(
         Order,
         related_name='order_items',
-        verbose_name="Покупатель",
+        verbose_name='Покупатель',
         on_delete=models.CASCADE,
     )
     product = models.ForeignKey(
