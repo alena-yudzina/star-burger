@@ -18,7 +18,7 @@ class Place(models.Model):
         decimal_places=14,
         verbose_name='Широта'
         )
-    created_at = models.DateTimeField(
-        verbose_name='Дата получения координат',
-        default=timezone.now
+    updated_at = models.DateTimeField(
+        verbose_name='Дата обновления координат',
+        auto_now=True
     )
