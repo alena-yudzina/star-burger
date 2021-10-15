@@ -11,11 +11,13 @@ class Place(models.Model):
     lng = models.DecimalField(
         max_digits=16,
         decimal_places=14,
+        blank=True,
         verbose_name='Долгота'
         )
     lat = models.DecimalField(
         max_digits=16,
         decimal_places=14,
+        blank=True,
         verbose_name='Широта'
         )
     updated_at = models.DateTimeField(
