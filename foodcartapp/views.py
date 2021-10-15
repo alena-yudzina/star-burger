@@ -8,8 +8,7 @@ from rest_framework.response import Response
 from rest_framework.serializers import ModelSerializer
 
 from places.models import Place
-from .models import (Order, OrderItem, OrderRestaurant, Product,
-                     RestaurantMenuItem)
+from .models import Order, OrderItem, Product
 
 
 class OrderItemSerializer(ModelSerializer):

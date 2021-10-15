@@ -10,8 +10,7 @@ from django.views import View
 from dotenv import load_dotenv
 from geopy import distance
 
-from foodcartapp.models import (Order, OrderItem, OrderRestaurant, Product,
-                                Restaurant, RestaurantMenuItem)
+from foodcartapp.models import Order, Product, Restaurant, RestaurantMenuItem
 from places.models import Place
 
 
@@ -124,11 +123,11 @@ def get_order_details(order, restaurants):
     order_lat = order_coords.lat
     rest_distance = []
     for rest in restaurants:
-        rest_coords = Place.objects.get(address=rest.restaurant.address)
+        rest_coords = Place.objects.get(address=rest.address)
         rest_lng = rest_coords.lng
         rest_lat = rest_coords.lat
         rest_distance.append({
-            'name': rest.restaurant.name,
+            'name': rest.name,
             'distance': round(distance.distance(
                 (order_lng, order_lat), (rest_lng, rest_lat)
             ).km, 2),
@@ -168,27 +167,21 @@ def view_orders(request):
     apikey = settings.YANDEX_GEO_API
     for order in orders:
         for restaurant in find_restaurants(order):
-            rest, created = OrderRestaurant.objects.get_or_create(
-                order = order,
-                restaurant = restaurant
-            )
             rest_lon, rest_lat = fetch_coordinates(
-                apikey, rest.restaurant.address
+                apikey, restaurant.address
             )
             obj, created = Place.objects.update_or_create(
-                address = rest.restaurant.address,
+                address = restaurant.address,
                 defaults={
                     'lng': rest_lon,
                     'lat': rest_lat
                 }
             )
 
-    restaurants = OrderRestaurant.objects.all().prefetch_related('restaurant')
-
     return render(request, template_name='order_items.html', context={
         'order_items': [
             get_order_details(
-                order, restaurants.filter(order=order)
+                order, find_restaurants(order)
             ) for order in orders
         ]
     })

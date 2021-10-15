@@ -257,25 +257,3 @@ class OrderItem(models.Model):
 
     def __str__(self):
         return self.product.name
-
-
-class OrderRestaurant(models.Model):
-    order = models.ForeignKey(
-        Order,
-        related_name='restaurants',
-        verbose_name="Заказ",
-        on_delete=models.CASCADE,
-    )
-    restaurant = models.ForeignKey(
-        Restaurant,
-        on_delete=models.CASCADE,
-        related_name='order',
-        verbose_name='Ресторан',
-    )
-
-    class Meta:
-        verbose_name = 'Ресторан доставки'
-        verbose_name_plural = 'Рестораны доставки'
-    
-    def __str__(self):
-        return self.restaurant.name

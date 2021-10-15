@@ -8,7 +8,7 @@ from django.utils.html import format_html
 from django.utils.http import url_has_allowed_host_and_scheme
 
 from .models import (Order, OrderItem, Product, ProductCategory, Restaurant,
-                     RestaurantMenuItem, OrderRestaurant)
+                     RestaurantMenuItem)
 
 
 class OrderModelAdmin(admin.ModelAdmin):
@@ -124,10 +124,6 @@ class OrderItemInline(admin.TabularInline):
     model = OrderItem
     extra = 0
 
-class OrderRestaurantInline(admin.TabularInline):
-    model = OrderRestaurant
-    extra = 0
-
 
 @admin.register(Order)
 class OrderAdmin(OrderModelAdmin):
@@ -136,6 +132,5 @@ class OrderAdmin(OrderModelAdmin):
         'address',
     ]
     inlines = [
-        OrderItemInline,
-        OrderRestaurantInline
+        OrderItemInline
     ]
