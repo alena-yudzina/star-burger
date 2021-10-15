@@ -107,9 +107,8 @@ def fetch_coordinates(apikey, address):
     })
     response.raise_for_status()
     found_places = response.json()['response']['GeoObjectCollection']['featureMember']
-
     if not found_places:
-        return None
+        return 0, 0
 
     most_relevant = found_places[0]
     lon, lat = most_relevant['GeoObject']['Point']['pos'].split(" ")
@@ -162,7 +161,7 @@ def find_restaurants(order):
 
 @user_passes_test(is_manager, login_url='restaurateur:login')
 def view_orders(request):
-    orders = Order.objects.all().get_total_price()
+    orders = Order.objects.get_total_price()
 
     apikey = settings.YANDEX_GEO_API
     for order in orders:

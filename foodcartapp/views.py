@@ -89,7 +89,7 @@ def fetch_coordinates(apikey, address):
     found_places = response.json()['response']['GeoObjectCollection']['featureMember']
 
     if not found_places:
-        return None
+        return 0, 0
 
     most_relevant = found_places[0]
     lon, lat = most_relevant['GeoObject']['Point']['pos'].split(" ")
