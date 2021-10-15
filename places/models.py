@@ -24,3 +24,12 @@ class Place(models.Model):
         verbose_name='Дата обновления координат',
         auto_now=True
     )
+
+
+    class Meta:
+        verbose_name = 'Адрес'
+        verbose_name_plural = 'Адреса'
+
+
+    def __str__(self):
+        return self.address
