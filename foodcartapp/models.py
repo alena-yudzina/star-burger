@@ -130,7 +130,7 @@ class OrderQuerySet(models.QuerySet):
     def get_total_price(self):
             return self.annotate(
                 total_price=Sum(
-                    F('products__price') * F('products__quantity'),
+                    F('order_items__price') * F('order_items__quantity'),
                     output_field=DecimalField(max_digits=8, decimal_places=2)
                 )
             )
@@ -156,7 +156,6 @@ class Order(models.Model):
         (NOT_SELECTED, 'Не выбран')
     ]
 
-    id = models.BigAutoField(primary_key=True)
     firstname = models.CharField(
         verbose_name='Имя',
         max_length=50
@@ -232,14 +231,14 @@ class Order(models.Model):
 class OrderItem(models.Model):
     order = models.ForeignKey(
         Order,
-        related_name='products',
+        related_name='order_items',
         verbose_name="Покупатель",
         on_delete=models.CASCADE,
     )
     product = models.ForeignKey(
         Product,
         on_delete=models.CASCADE,
-        related_name='orderes',
+        related_name='orders',
         verbose_name='Товар',
     )
     quantity = models.IntegerField(

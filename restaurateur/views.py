@@ -151,7 +151,7 @@ def get_order_details(order, restaurants):
 
 def find_restaurants(order):
     rests_for_products = []
-    for order_item in order.products.all():
+    for order_item in order.order_items.all():
         rests_for_product = [item.restaurant for item in
             RestaurantMenuItem.objects.filter(product=order_item.product) if item.availability]
         rests_for_products.append(rests_for_product)
