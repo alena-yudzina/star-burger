@@ -147,11 +147,11 @@ def get_order_details(order, restaurants):
     }
 
 
-def find_restaurants(order):
+def find_restaurants(order, restaurants):
     rests_for_products = []
     for order_item in order.order_items.all():
         rests_for_product = [item.restaurant for item in
-            RestaurantMenuItem.objects.filter(product=order_item.product) if item.availability]
+            RestaurantMenuItem.objects.select_related('restaurant').filter(product=order_item.product) if item.availability]
         rests_for_products.append(rests_for_product)
     appropriate_rests = set(rests_for_products[0])
     for rests in rests_for_products:
@@ -161,26 +161,27 @@ def find_restaurants(order):
 
 @user_passes_test(is_manager, login_url='restaurateur:login')
 def view_orders(request):
-    orders = Order.objects.get_total_price()
-
+    orders = Order.objects.get_total_price().prefetch_related('order_items')
     apikey = settings.YANDEX_GEO_API
-    for order in orders:
-        for restaurant in find_restaurants(order):
-            rest_lon, rest_lat = fetch_coordinates(
-                apikey, restaurant.address
-            )
-            obj, created = Place.objects.update_or_create(
-                address = restaurant.address,
-                defaults={
-                    'lng': rest_lon,
-                    'lat': rest_lat
-                }
-            )
+
+    addresses = list(orders.values_list('address', flat=True))
+    restaurants = Restaurant.objects.all()
+    addresses.extend(list(restaurants.values_list('address', flat=True)))
+    exist_addresses = list(Place.objects.values_list('address', flat=True))
+    addresses_to_add = list(set(addresses) - set(exist_addresses))
+
+    for address in addresses_to_add:
+        lon, lat = fetch_coordinates(apikey, address)
+        Place.objects.create(
+            address=address,
+            lon=lon,
+            lat=lat
+        )
 
     return render(request, template_name='order_items.html', context={
         'order_items': [
             get_order_details(
-                order, find_restaurants(order)
+                order, find_restaurants(order, restaurants)
             ) for order in orders
         ]
     })
