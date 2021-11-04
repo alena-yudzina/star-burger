@@ -161,7 +161,7 @@ def find_restaurants(order, rests_menu):
     
     rests_for_products = []
     for order_item in order.order_items.all():
-        rests_for_product = rests_menu.filter(product=order_item.product, availability=True) # убрать запрос в другую функцию, избавиться от циклов. сначала вытащить все инюу из рестменюайтем
+        rests_for_product = list(filter(lambda rest: rest.product==order_item.product and rest.availability==True, rests_menu))
         rests_for_products.append(rests_for_product)
     appropriate_rests = set(rests_for_products[0])
     for rests in rests_for_products:
