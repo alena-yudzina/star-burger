@@ -1,3 +1,4 @@
+from django.db.models.expressions import OuterRef, Subquery
 import requests
 from django import forms
 from django.conf import settings
@@ -98,37 +99,46 @@ def view_restaurants(request):
     })
 
 
-def fetch_coordinates(apikey, address):
+def fetch_coordinates(apikey, addresses):
     base_url = "https://geocode-maps.yandex.ru/1.x"
-    response = requests.get(base_url, params={
-        "geocode": address,
-        "apikey": apikey,
-        "format": "json",
-    })
-    response.raise_for_status()
-    found_places = response.json()['response']['GeoObjectCollection']['featureMember']
-    if not found_places:
-        return 0, 0
-
-    most_relevant = found_places[0]
-    lon, lat = most_relevant['GeoObject']['Point']['pos'].split(" ")
-    return lon, lat
+    addresses_with_coords = []
+    for address in addresses:
+        response = requests.get(base_url, params={
+            "geocode": address,
+            "apikey": apikey,
+            "format": "json",
+        })
+        response.raise_for_status()
+        found_places = response.json()['response']['GeoObjectCollection']['featureMember']
+        if not found_places:
+            addresses_with_coords.append(
+                {
+                    'address': address,
+                    'lng': 0,
+                    'lat': 0
+                }
+            )
+        else:
+            most_relevant = found_places[0]
+            lng, lat = most_relevant['GeoObject']['Point']['pos'].split(" ")
+            addresses_with_coords.append(
+                {
+                    'address': address,
+                    'lng': lng,
+                    'lat': lat
+                }
+            )
+        return addresses_with_coords
 
 
 def get_order_details(order, restaurants):
 
-    order_coords = Place.objects.get(address=order.address)
-    order_lng = order_coords.lng
-    order_lat = order_coords.lat
     rest_distance = []
     for rest in restaurants:
-        rest_coords = Place.objects.get(address=rest.address)
-        rest_lng = rest_coords.lng
-        rest_lat = rest_coords.lat
         rest_distance.append({
-            'name': rest.name,
+            'name': rest.restaurant.name,
             'distance': round(distance.distance(
-                (order_lng, order_lat), (rest_lng, rest_lat)
+                (order.lng, order.lat), (rest.lng, rest.lat)
             ).km, 2),
         })
     rest_distance = sorted(rest_distance, key=lambda k: k['distance'])
@@ -147,11 +157,11 @@ def get_order_details(order, restaurants):
     }
 
 
-def find_restaurants(order, restaurants):
+def find_restaurants(order, rests_menu):
+    
     rests_for_products = []
     for order_item in order.order_items.all():
-        rests_for_product = [item.restaurant for item in
-            RestaurantMenuItem.objects.select_related('restaurant').filter(product=order_item.product) if item.availability]
+        rests_for_product = rests_menu.filter(product=order_item.product, availability=True) # убрать запрос в другую функцию, избавиться от циклов. сначала вытащить все инюу из рестменюайтем
         rests_for_products.append(rests_for_product)
     appropriate_rests = set(rests_for_products[0])
     for rests in rests_for_products:
@@ -161,27 +171,54 @@ def find_restaurants(order, restaurants):
 
 @user_passes_test(is_manager, login_url='restaurateur:login')
 def view_orders(request):
-    orders = Order.objects.get_total_price().prefetch_related('order_items')
+    
+    places = Place.objects.all()
+    orders = (
+        Order.objects
+        .get_total_price()
+        .prefetch_related('order_items')
+        .annotate(
+            lng=Subquery(places.filter(address=OuterRef('address')).values('lng')),
+            lat=Subquery(places.filter(address=OuterRef('address')).values('lat'))
+        )
+    )
     apikey = settings.YANDEX_GEO_API
 
     addresses = list(orders.values_list('address', flat=True))
-    restaurants = Restaurant.objects.all()
+    restaurants = (
+        Restaurant.objects
+        .all()
+        .annotate(
+            lng=Subquery(places.filter(address=OuterRef('address')).values('lng')),
+            lat=Subquery(places.filter(address=OuterRef('address')).values('lat'))
+        )
+    )
+
     addresses.extend(list(restaurants.values_list('address', flat=True)))
     exist_addresses = list(Place.objects.values_list('address', flat=True))
     addresses_to_add = list(set(addresses) - set(exist_addresses))
 
-    for address in addresses_to_add:
-        lon, lat = fetch_coordinates(apikey, address)
-        Place.objects.create(
-            address=address,
-            lon=lon,
-            lat=lat
+    if addresses_to_add:
+        addresses_with_coords = fetch_coordinates(apikey, addresses_to_add)
+        Place.objects.bulk_create([
+            Place(address=place['address'], lng=place['lng'], lat=place['lat'])
+            for place in addresses_with_coords
+        ])
+
+    rests_menu = (
+        RestaurantMenuItem.objects
+        .select_related('restaurant')
+        .select_related('product')
+        .annotate(
+            lng=Subquery(places.filter(address=OuterRef('restaurant__address')).values('lng')),
+            lat=Subquery(places.filter(address=OuterRef('restaurant__address')).values('lat'))
         )
+    )
 
     return render(request, template_name='order_items.html', context={
         'order_items': [
-            get_order_details(
-                order, find_restaurants(order, restaurants)
-            ) for order in orders
+            get_order_details( 
+                order, find_restaurants(order, rests_menu)
+            ) for order in orders 
         ]
     })
