@@ -1,17 +1,19 @@
-from django.db.models.expressions import OuterRef, Subquery
 import requests
 from django import forms
 from django.conf import settings
 from django.contrib.auth import authenticate, login
 from django.contrib.auth import views as auth_views
 from django.contrib.auth.decorators import user_passes_test
+from django.db.models import Prefetch
+from django.db.models.expressions import OuterRef, Subquery
 from django.shortcuts import redirect, render
 from django.urls import reverse_lazy
 from django.views import View
 from dotenv import load_dotenv
 from geopy import distance
 
-from foodcartapp.models import Order, Product, Restaurant, RestaurantMenuItem
+from foodcartapp.models import (Order, OrderItem, Product, Restaurant,
+                                RestaurantMenuItem)
 from places.models import Place
 
 
@@ -160,6 +162,7 @@ def get_order_details(order, restaurants):
 def find_restaurants(order, rests_menu):
     
     rests_for_products = []
+
     for order_item in order.order_items.all():
         rests_for_product = list(filter(lambda rest: rest.product==order_item.product and rest.availability==True, rests_menu))
         rests_for_products.append(rests_for_product)
@@ -171,17 +174,18 @@ def find_restaurants(order, rests_menu):
 
 @user_passes_test(is_manager, login_url='restaurateur:login')
 def view_orders(request):
-    
+
     places = Place.objects.all()
     orders = (
         Order.objects
         .get_total_price()
-        .prefetch_related('order_items')
+        .prefetch_related(Prefetch('order_items__product'))
         .annotate(
             lng=Subquery(places.filter(address=OuterRef('address')).values('lng')),
-            lat=Subquery(places.filter(address=OuterRef('address')).values('lat'))
+            lat=Subquery(places.filter(address=OuterRef('address')).values('lat')),
         )
     )
+    
     apikey = settings.YANDEX_GEO_API
 
     addresses = list(orders.values_list('address', flat=True))
