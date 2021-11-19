@@ -164,13 +164,10 @@ def get_order_details(order, restaurants):
 def find_restaurants(order, rests_menu):
     
     rests_for_products = []
-
     for order_item in order.order_items.all():
-        rests_for_product = list(filter(lambda rest: rest.product==order_item.product, rests_menu))
-        rests_for_products.append(rests_for_product)
-    appropriate_rests = set(rests_for_products[0])
-    for rests in rests_for_products:
-        appropriate_rests = appropriate_rests & set(rests)
+        rests_for_product = [rest for rest in rests_menu if rest.product==order_item.product]
+        rests_for_products.append(set(rests_for_product))
+    appropriate_rests = set.intersection(*rests_for_products)
     return appropriate_rests
 
 
