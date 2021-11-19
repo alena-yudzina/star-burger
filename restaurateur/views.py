@@ -177,7 +177,6 @@ def find_restaurants(order, rests_menu):
 @user_passes_test(is_manager, login_url='restaurateur:login')
 def view_orders(request):
 
-    places = Place.objects.all()
     orders = (
         Order.objects
         .get_total_price()
@@ -194,9 +193,9 @@ def view_orders(request):
         .fetch_coordinates()
     )
 
-    addresses.extend(list(restaurants.values_list('address', flat=True)))
-    exist_addresses = list(Place.objects.values_list('address', flat=True))
-    addresses_to_add = list(set(addresses) - set(exist_addresses))
+    addresses.extend(restaurants.values_list('address', flat=True))
+    exist_addresses = Place.objects.values_list('address', flat=True)
+    addresses_to_add = set(addresses) - set(exist_addresses)
 
     if addresses_to_add:
         addresses_with_coords = fetch_coordinates(apikey, addresses_to_add)
@@ -209,10 +208,7 @@ def view_orders(request):
         RestaurantMenuItem.objects
         .select_related('restaurant')
         .select_related('product')
-        .annotate(
-            lng=Subquery(places.filter(address=OuterRef('restaurant__address')).values('lng')),
-            lat=Subquery(places.filter(address=OuterRef('restaurant__address')).values('lat'))
-        )
+        .fetch_coordinates()
     )
 
     return render(request, template_name='order_items.html', context={
