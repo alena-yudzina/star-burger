@@ -188,12 +188,8 @@ def view_orders(request):
     apikey = settings.YANDEX_GEO_API
 
     addresses = list(orders.values_list('address', flat=True))
-    restaurants = (
-        Restaurant.objects
-        .fetch_coordinates()
-    )
 
-    addresses.extend(restaurants.values_list('address', flat=True))
+    addresses.extend(Restaurant.objects.values_list('address', flat=True))
     exist_addresses = Place.objects.values_list('address', flat=True)
     addresses_to_add = set(addresses) - set(exist_addresses)
 

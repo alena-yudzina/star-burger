@@ -9,16 +9,6 @@ from phonenumber_field.modelfields import PhoneNumberField
 from places.models import Place
 
 
-
-class RestaurantQuerySet(models.QuerySet):
-    def fetch_coordinates(self):
-        places = Place.objects.all()
-        return self.annotate(
-            lng=Subquery(places.filter(address=OuterRef('address')).values('lng')),
-            lat=Subquery(places.filter(address=OuterRef('address')).values('lat'))
-        )
-
-
 class Restaurant(models.Model):
     name = models.CharField(
         'название',
@@ -34,8 +24,6 @@ class Restaurant(models.Model):
         max_length=50,
         blank=True,
     )
-
-    objects = RestaurantQuerySet.as_manager()
 
     class Meta:
         verbose_name = 'ресторан'
