@@ -181,11 +181,8 @@ def view_orders(request):
     orders = (
         Order.objects
         .get_total_price()
+        .fetch_coordinates()
         .prefetch_related(Prefetch('order_items__product'))
-        .annotate(
-            lng=Subquery(places.filter(address=OuterRef('address')).values('lng')),
-            lat=Subquery(places.filter(address=OuterRef('address')).values('lat')),
-        )
     )
     
     apikey = settings.YANDEX_GEO_API
@@ -193,11 +190,8 @@ def view_orders(request):
     addresses = list(orders.values_list('address', flat=True))
     restaurants = (
         Restaurant.objects
+        .fetch_coordinates()
         .all()
-        .annotate(
-            lng=Subquery(places.filter(address=OuterRef('address')).values('lng')),
-            lat=Subquery(places.filter(address=OuterRef('address')).values('lat'))
-        )
     )
 
     addresses.extend(list(restaurants.values_list('address', flat=True)))

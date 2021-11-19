@@ -2,8 +2,21 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.db.models import DecimalField, F, Sum
 from django.db.models.deletion import SET_NULL
+from django.db.models.expressions import OuterRef, Subquery
 from django.utils import timezone
 from phonenumber_field.modelfields import PhoneNumberField
+
+from places.models import Place
+
+
+
+class RestaurantQuerySet(models.QuerySet):
+    def fetch_coordinates(self):
+        places = Place.objects.all()
+        return self.annotate(
+            lng=Subquery(places.filter(address=OuterRef('address')).values('lng')),
+            lat=Subquery(places.filter(address=OuterRef('address')).values('lat'))
+        )
 
 
 class Restaurant(models.Model):
@@ -21,6 +34,8 @@ class Restaurant(models.Model):
         max_length=50,
         blank=True,
     )
+
+    objects = RestaurantQuerySet.as_manager()
 
     class Meta:
         verbose_name = 'ресторан'
@@ -128,12 +143,20 @@ class RestaurantMenuItem(models.Model):
 
 class OrderQuerySet(models.QuerySet):
     def get_total_price(self):
-            return self.annotate(
-                total_price=Sum(
-                    F('order_items__price') * F('order_items__quantity'),
-                    output_field=DecimalField(max_digits=8, decimal_places=2)
-                )
+        return self.annotate(
+            total_price=Sum(
+                F('order_items__price') * F('order_items__quantity'),
+                output_field=DecimalField(max_digits=8, decimal_places=2)
             )
+        )
+
+    
+    def fetch_coordinates(self):
+        places = Place.objects.all()
+        return self.annotate(
+            lng=Subquery(places.filter(address=OuterRef('address')).values('lng')),
+            lat=Subquery(places.filter(address=OuterRef('address')).values('lat')),
+        )
 
 
 class Order(models.Model):
