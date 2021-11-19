@@ -116,8 +116,8 @@ def fetch_coordinates(apikey, addresses):
             addresses_with_coords.append(
                 {
                     'address': address,
-                    'lng': 0,
-                    'lat': 0
+                    'lng': None,
+                    'lat': None
                 }
             )
         else:
