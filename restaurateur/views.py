@@ -101,36 +101,38 @@ def view_restaurants(request):
     })
 
 
-def fetch_coordinates(apikey, addresses):
-    base_url = "https://geocode-maps.yandex.ru/1.x"
-    addresses_with_coords = []
-    for address in addresses:
-        response = requests.get(base_url, params={
+def find_coordinates(base_url, address, apikey):
+    response = requests.get(base_url, params={
             "geocode": address,
             "apikey": apikey,
             "format": "json",
-        })
-        response.raise_for_status()
-        found_places = response.json()['response']['GeoObjectCollection']['featureMember']
-        if not found_places:
-            addresses_with_coords.append(
-                {
-                    'address': address,
-                    'lng': None,
-                    'lat': None
-                }
-            )
-        else:
-            most_relevant = found_places[0]
-            lng, lat = most_relevant['GeoObject']['Point']['pos'].split(" ")
-            addresses_with_coords.append(
-                {
-                    'address': address,
-                    'lng': lng,
-                    'lat': lat
-                }
-            )
-        return addresses_with_coords
+    })
+    response.raise_for_status()
+    found_places = response.json()['response']['GeoObjectCollection']['featureMember']
+    if not found_places:
+        address_with_coords = {
+            'address': address,
+            'lng': None,
+            'lat': None
+        }
+    else:
+        most_relevant = found_places[0]
+        lng, lat = most_relevant['GeoObject']['Point']['pos'].split(" ")
+        address_with_coords = {
+            'address': address,
+            'lng': lng,
+            'lat': lat
+        }
+    return address_with_coords
+
+
+def fetch_coordinates(apikey, addresses):
+    base_url = "https://geocode-maps.yandex.ru/1.x"
+
+    addresses_with_coords = [find_coordinates(base_url, address, apikey)
+        for address in addresses
+    ]
+    return addresses_with_coords
 
 
 def get_order_details(order, restaurants):
