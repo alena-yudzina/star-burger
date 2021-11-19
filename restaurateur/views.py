@@ -166,7 +166,7 @@ def find_restaurants(order, rests_menu):
     rests_for_products = []
 
     for order_item in order.order_items.all():
-        rests_for_product = list(filter(lambda rest: rest.product==order_item.product and rest.availability==True, rests_menu))
+        rests_for_product = list(filter(lambda rest: rest.product==order_item.product, rests_menu))
         rests_for_products.append(rests_for_product)
     appropriate_rests = set(rests_for_products[0])
     for rests in rests_for_products:
@@ -187,7 +187,7 @@ def view_orders(request):
     
     apikey = settings.YANDEX_GEO_API
 
-    addresses = list(orders.values_list('address', flat=True))
+    addresses = [order.address for order in orders]
 
     addresses.extend(Restaurant.objects.values_list('address', flat=True))
     exist_addresses = Place.objects.values_list('address', flat=True)
@@ -205,6 +205,7 @@ def view_orders(request):
         .select_related('restaurant')
         .select_related('product')
         .fetch_coordinates()
+        .filter(availability=True)
     )
 
     return render(request, template_name='order_items.html', context={
