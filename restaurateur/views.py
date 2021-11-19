@@ -183,6 +183,7 @@ def view_orders(request):
         .get_total_price()
         .fetch_coordinates()
         .prefetch_related(Prefetch('order_items__product'))
+        .filter(status='not_processed')
     )
     
     apikey = settings.YANDEX_GEO_API
