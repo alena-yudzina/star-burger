@@ -192,7 +192,6 @@ def view_orders(request):
     restaurants = (
         Restaurant.objects
         .fetch_coordinates()
-        .all()
     )
 
     addresses.extend(list(restaurants.values_list('address', flat=True)))
