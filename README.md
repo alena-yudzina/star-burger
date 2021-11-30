@@ -55,6 +55,11 @@ pip install -r requirements.txt
 
 Создайте файл `.env` в каталоге `star_burger/` со следующими настройками:
 
+- `DEBUG` — дебаг-режим. Поставьте `False`.
+- `SECRET_KEY` — секретный ключ проекта. Он отвечает за шифрование на сайте. Например, им зашифрованы все пароли на вашем сайте. Не стоит использовать значение по-умолчанию, **замените на своё**.
+- `ALLOWED_HOSTS` — [см. документацию Django](https://docs.djangoproject.com/en/3.1/ref/settings/#allowed-hosts)
+- `ROLLBAR_TOKEN` - токен для системы логирования [ROLLBAR](https://rollbar.com/)
+- `ROLLBAR_ENVIRONMENT` - настройка environment в Rollbar, например `development`
 - `YANDEX_GEO_API` — ключ доступа к яндекс JavaScript API и HTTP Геокодер. [https://developer.tech.yandex.ru/](https://developer.tech.yandex.ru/)
 
 
@@ -148,7 +153,9 @@ parcel build bundles-src/index.js --dist-dir bundles --public-url="./"
 - `DEBUG` — дебаг-режим. Поставьте `False`.
 - `SECRET_KEY` — секретный ключ проекта. Он отвечает за шифрование на сайте. Например, им зашифрованы все пароли на вашем сайте. Не стоит использовать значение по-умолчанию, **замените на своё**.
 - `ALLOWED_HOSTS` — [см. документацию Django](https://docs.djangoproject.com/en/3.1/ref/settings/#allowed-hosts)
-
+- `ROLLBAR_TOKEN` - токен для системы логирования [ROLLBAR](https://rollbar.com/)
+- `ROLLBAR_ENVIRONMENT` - настройка environment в Rollbar, например `development`
+- `YANDEX_GEO_API` — ключ доступа к яндекс JavaScript API и HTTP Геокодер. [https://developer.tech.yandex.ru/](https://developer.tech.yandex.ru/)
 ## Цели проекта
 
 Код написан в учебных целях — это урок в курсе по Python и веб-разработке на сайте [Devman](https://dvmn.org). За основу был взят код проекта [FoodCart](https://github.com/Saibharath79/FoodCart).

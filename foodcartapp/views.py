@@ -100,11 +100,9 @@ def fetch_coordinates(apikey, address):
 @api_view(['POST'])
 def register_order(request):
     apikey = settings.YANDEX_GEO_API
-
     order = request.data
     serializer = OrderSerializer(data=order)
-    serializer.is_valid(raise_exception=True)
-    
+    serializer.is_valid(raise_exception=True)    
     order = Order.objects.create(
         firstname = serializer.validated_data['firstname'],
         lastname = serializer.validated_data['lastname'],
