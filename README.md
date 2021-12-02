@@ -61,9 +61,10 @@ pip install -r requirements.txt
 - `ROLLBAR_TOKEN` - токен для системы логирования [ROLLBAR](https://rollbar.com/)
 - `ROLLBAR_ENVIRONMENT` - настройка environment в Rollbar, например `development`
 - `YANDEX_GEO_API` — ключ доступа к яндекс JavaScript API и HTTP Геокодер. [https://developer.tech.yandex.ru/](https://developer.tech.yandex.ru/)
+- `DATABASE_URL` - url для подключения к базе данных вида `postgres://USER:PASSWORD@HOST:PORT/NAME`
 
 
-Создайте файл базы данных SQLite и отмигрируйте её следующей командой:
+Создайте файл базы данных и отмигрируйте её следующей командой:
 
 ```sh
 python manage.py migrate
@@ -156,6 +157,8 @@ parcel build bundles-src/index.js --dist-dir bundles --public-url="./"
 - `ROLLBAR_TOKEN` - токен для системы логирования [ROLLBAR](https://rollbar.com/)
 - `ROLLBAR_ENVIRONMENT` - настройка environment в Rollbar, например `development`
 - `YANDEX_GEO_API` — ключ доступа к яндекс JavaScript API и HTTP Геокодер. [https://developer.tech.yandex.ru/](https://developer.tech.yandex.ru/)
+- `DATABASE_URL` - url для подключения к базе данных вида `postgres://USER:PASSWORD@HOST:PORT/NAME`
+
 ## Цели проекта
 
 Код написан в учебных целях — это урок в курсе по Python и веб-разработке на сайте [Devman](https://dvmn.org). За основу был взят код проекта [FoodCart](https://github.com/Saibharath79/FoodCart).

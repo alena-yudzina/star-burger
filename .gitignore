@@ -1,4 +1,6 @@
+dump.json
 staticfiles/
+.DS_Store
 
 bundles/**
 node_modules/
