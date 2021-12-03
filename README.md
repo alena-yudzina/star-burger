@@ -1,6 +1,6 @@
 # Сайт доставки еды Star Burger
 
-Пример [starburger-yudzina.tk] (http://starburger-yudzina.tk/)
+Пример (http://starburger-yudzina.tk/)
 
 Это сайт сети ресторанов Star Burger. Здесь можно заказать превосходные бургеры с доставкой на дом.
 
@@ -177,6 +177,14 @@ cd /opt/star-burger/
 ```sh
 . /root/deploy_star_burger.sh
 ```
+
+## Координаты сервера
+
+https://starburger-yudzina.tk/
+81.163.29.98
+root
+/root/deploy_star_burger.sh
+
 
 ## Цели проекта
 
