@@ -1,6 +1,6 @@
 # Сайт доставки еды Star Burger
 
-Пример [http://starburger-yudzina.tk/] (http://starburger-yudzina.tk/)
+Пример [starburger-yudzina.tk] (http://starburger-yudzina.tk/)
 
 Это сайт сети ресторанов Star Burger. Здесь можно заказать превосходные бургеры с доставкой на дом.
 
@@ -160,6 +160,23 @@ parcel build bundles-src/index.js --dist-dir bundles --public-url="./"
 - `ROLLBAR_ENVIRONMENT` - настройка environment в Rollbar, например `development`
 - `YANDEX_GEO_API` — ключ доступа к яндекс JavaScript API и HTTP Геокодер. [https://developer.tech.yandex.ru/](https://developer.tech.yandex.ru/)
 - `DATABASE_URL` - url для подключения к базе данных вида `postgres://USER:PASSWORD@HOST:PORT/NAME`
+
+## Как задеплоить на сервере
+
+Подключиться к серверу.
+```sh
+ssh starburger
+```
+
+Перейти в папку с проектом.
+```sh
+cd /opt/star-burger/
+```
+
+Запустить bash-скрипт.
+```sh
+. /root/deploy_star_burger.sh
+```
 
 ## Цели проекта
 
