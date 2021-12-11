@@ -180,10 +180,10 @@ cd /opt/star-burger/
 
 ## Координаты сервера
 
-https://starburger-yudzina.tk/
-81.163.29.98
-root
-/root/deploy_star_burger.sh
+- https://starburger-yudzina.tk/
+- 81.163.29.98
+- root
+- /root/deploy_star_burger.sh
 
 
 ## Цели проекта
