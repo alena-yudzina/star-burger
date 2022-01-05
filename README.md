@@ -1,6 +1,6 @@
 # Сайт доставки еды Star Burger
 
-Пример (http://starburger-yudzina.tk/)
+[Пример] (http://starburger-yudzina.tk/)
 
 Это сайт сети ресторанов Star Burger. Здесь можно заказать превосходные бургеры с доставкой на дом.
 
